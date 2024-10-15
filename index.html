@@ -72,6 +72,14 @@
         .bottom-right button span {
             text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
         }
+        /* 게임 버튼 컨테이너 */
+        .game-buttons {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
         /* 동적 버튼들 */
         .dynamic-buttons {
             position: absolute;
@@ -90,7 +98,7 @@
             flex-direction: row;
             width: 320px; /* 두 줄 정렬을 위한 버튼 컨테이너 크기 */
         }
-        .dynamic-buttons button, .game-buttons button {
+        .dynamic-buttons button {
             background-color: #FF69B4;
             border: 2px solid #000;
             color: white;
@@ -176,6 +184,24 @@
             text-align: center;
             border-radius: 5px;
             border: 2px solid #666;
+        }
+        /* 게임 버튼들 */
+        .game-buttons button {
+            background-color: #FF1493;
+            border: 2px solid #000;
+            color: white;
+            padding: 10px 20px;
+            font-size: 18px;
+            width: 150px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-shadow: 1px 1px 1px #000;
+            box-shadow: 0 4px #666;
+            font-family: 'DNFBitBit', Arial, sans-serif;
+            transition: background-color 0.2s ease;
+        }
+        .game-buttons button:hover {
+            background-color: #FF69B4;
         }
         /* 모달 창 */
         .modal-window {
@@ -275,12 +301,34 @@
             if (type === 'bgm') {
                 buttons = [
                     { text: '섹시', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/섹시.mp3' },
-                    { text: '불쌍', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/불쌍.mp3' }
+                    { text: '불쌍', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/불쌍.mp3' },
+                    { text: '게임', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/게임.mp3' },
+                    { text: '원투', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/원투.mp3' },
+                    { text: '코난', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/코난등장.mp3' },
+                    { text: '황당', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/황당.mp3' },
+                    { text: '멸망', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/멸망.mp3' },
+                    { text: '반야심경', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/반야심경리믹스.mp3' },
+                    { text: '중지', action: stopAudio }
                 ];
             } else if (type === 'reaction') {
                 buttons = [
                     { text: '사쿠란보', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/사쿠란보.mp3' },
-                    { text: '솜사탕', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/솜사탕.mp3' }
+                    { text: '마라탕후루', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/마라탕후루.mp3' },
+                    { text: '솜사탕', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/솜사탕.mp3' },
+                    { text: '제로투', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/제로투.mp3' },
+                    { text: '코카인', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/코카인.mp3' },
+                    { text: '제로콕', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/제로콕.mp3' },
+                    { text: '여봉봉', audio: 'https://raw.githubusercontent.com/yunrang2/upload/master/여봉봉.mp3' },
+                    { text: '뿌에', action: playPpuwe },
+                    { text: '중지', action: stopAudio }
+                ];
+            } else if (type === 'timer') {
+                buttons = [
+                    { text: '20초', action: () => createOrUpdateTimer(20) },
+                    { text: '30초', action: () => createOrUpdateTimer(30) },
+                    { text: '1분', action: () => createOrUpdateTimer(60) },
+                    { text: '30분', action: () => createOrUpdateTimer(1800) },
+                    { text: '직접 설정', action: openCustomTimerModal }
                 ];
             }
 
@@ -288,10 +336,15 @@
             rowContainer.className = 'button-row';
             buttons.forEach((btn) => {
                 const button = document.createElement('button');
-                button.className = 'bgm-button';
+                button.className = btn.className || (type === 'bgm' ? 'bgm-button' : 'reaction-button');
                 button.innerText = btn.text;
                 if (btn.audio) {
                     button.onclick = () => playAudio(button, btn.audio);
+                } else if (btn.action) {
+                    button.onclick = () => {
+                        btn.action();
+                        resetButtonColor();
+                    };
                 }
                 rowContainer.appendChild(button);
             });
@@ -308,18 +361,149 @@
             }
         }
 
+        function playAudio(button, src) {
+            if (currentAudio && currentAudio.src !== src) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+            if (!currentAudio || currentAudio.src !== src) {
+                currentAudio = new Audio(src);
+            }
+            currentAudio.loop = false;
+            currentAudio.volume = 0.8;
+            currentAudio.play();
+
+            // 기존 활성화된 버튼 색상 복원
+            if (activeButton) {
+                activeButton.classList.remove('active');
+            }
+
+            // 새로운 버튼 색상 변경
+            button.classList.add('active');
+            activeButton = button;
+
+            // 노래가 끝나면 색상 복원
+            currentAudio.onended = () => resetButtonColor();
+        }
+
+        function resetButtonColor() {
+            if (activeButton) {
+                activeButton.classList.remove('active');
+                activeButton = null;
+            }
+        }
+
+        function stopAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+            }
+            resetButtonColor();
+        }
+
+        function playPpuwe() {
+            playAudio(document.querySelector('.reaction-button[innerText="뿌에"]'), 'https://raw.githubusercontent.com/yunrang2/upload/master/뿌에.mp3');
+        }
+
+        // 타이머를 새로 만들거나 추가
+        function createOrUpdateTimer(duration) {
+            let timer = timers.find(t => t.active); // 이미 동작 중인 타이머 찾기
+            if (timer) {
+                // 남은 시간에 추가
+                timer.remaining += duration;
+                timer.element.textContent = formatTime(timer.remaining);
+            } else {
+                // 새 타이머 생성
+                createTimer(duration);
+            }
+        }
+
+        function createTimer(duration) {
+            let timerBox = document.createElement('div');
+            timerBox.className = 'timer-box';
+            timerBox.style.top = timerPositions[currentPosition].top;
+            timerBox.style.left = timerPositions[currentPosition].left;
+            document.body.appendChild(timerBox);
+            currentPosition = (currentPosition + 1) % timerPositions.length;
+
+            timerBox.style.display = 'block';
+            timerBox.textContent = formatTime(duration);
+
+            const timer = {
+                element: timerBox,
+                duration: duration,
+                remaining: duration,
+                interval: null,
+                active: true
+            };
+            timers.push(timer);
+
+            timerBox.onclick = () => {
+                if (timer.active) {
+                    clearInterval(timer.interval);
+                } else {
+                    startTimer(timer);
+                }
+                timer.active = !timer.active;
+            };
+
+            startTimer(timer);
+        }
+
+        function startTimer(timer) {
+            timer.interval = setInterval(() => {
+                if (timer.remaining > 0) {
+                    timer.remaining--;
+                    timer.element.textContent = formatTime(timer.remaining);
+
+                    if (timer.remaining <= 5) {
+                        timer.element.classList.add('vibrate');
+                        timer.element.style.backgroundColor = timer.remaining % 2 === 0 ? 'red' : 'white';
+                    } else {
+                        timer.element.classList.remove('vibrate');
+                        timer.element.style.backgroundColor = 'white';
+                    }
+                } else {
+                    clearInterval(timer.interval);
+                    timer.element.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function openCustomTimerModal() {
+            document.getElementById('input-timer-modal').style.display = 'block';
+        }
+
+        function setCustomTimer() {
+            const minutes = parseInt(document.getElementById('custom-minutes').value, 10);
+            const seconds = parseInt(document.getElementById('custom-seconds').value, 10);
+            const duration = (minutes * 60) + seconds;
+            document.getElementById('input-timer-modal').style.display = 'none';
+            createOrUpdateTimer(duration);
+        }
+
+        // 게임 버튼 기능
+        function toggleGameButtons() {
+            const gameButtons = document.getElementById('game-buttons');
+            gameButtons.style.display = gameButtons.style.display === 'flex' ? 'none' : 'flex';
+        }
+
         function openModalWindow(url) {
-            const modal = document.getElementById('modal-window');
-            const iframe = modal.querySelector('iframe');
-            iframe.src = url;
-            modal.style.display = 'block';
+            // 기존 창 닫기
+            modal.iframe.src = url;
+            modal.element.style.display = 'block';
         }
 
         function closeModal() {
-            const modal = document.getElementById('modal-window');
-            modal.style.display = 'none';
-            const iframe = modal.querySelector('iframe');
-            iframe.src = '';
+            modal.element.style.display = 'none';
+            modal.iframe.src = '';
         }
     </script>
 </head>
