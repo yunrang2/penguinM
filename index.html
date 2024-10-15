@@ -227,6 +227,23 @@
         let contentVisible = true;
         let bgMusic = null;
 
+        // 현재 열린 게임 창
+        let currentGameWindow = null;
+
+        // 모달 창 요소
+        const modal = {
+            element: null,
+            iframe: null,
+            closeButton: null
+        };
+
+        window.onload = function() {
+            modal.element = document.getElementById('modal-window');
+            modal.iframe = modal.element.querySelector('iframe');
+            modal.closeButton = modal.element.querySelector('.close-modal');
+            modal.closeButton.onclick = closeModal;
+        };
+
         function toggleModal(modalId) {
             const modals = document.querySelectorAll('.modal');
             modals.forEach(modal => {
@@ -460,17 +477,40 @@
             toggleModal('input-timer-modal');
             createTimer(duration);
         }
+
+        // 게임 버튼 기능
+        function toggleGameButtons() {
+            const gameButtons = document.getElementById('game-buttons');
+            gameButtons.style.display = gameButtons.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function openModalWindow(url) {
+            modal.iframe.src = url;
+            modal.element.style.display = 'block';
+        }
+
+        function closeModal() {
+            modal.element.style.display = 'none';
+            modal.iframe.src = '';
+        }
     </script>
 </head>
 <body>
     <div class="canvas">
         <div class="top-left">
-            <img src="https://raw.githubusercontent.com/yunrang2/upload/master/펭귄님%20미션판.png" alt="미션판" onclick="toggleContentVisibility()">
+            <img src="https://raw.githubusercontent.com/yunrang2/penguinM/refs/heads/main/펭귄님%20미션판.png" alt="미션판" onclick="toggleContentVisibility()">
         </div>
         <div class="bottom-right">
             <button id="timer-btn" onclick="showDynamicButtons('timer')"><span>타이머</span></button>
             <button id="bgm-btn" onclick="showDynamicButtons('bgm')"><span>브금</span></button>
             <button id="reaction-btn" onclick="showDynamicButtons('reaction')"><span>리액션</span></button>
+            <!-- 게임 버튼 -->
+            <button id="game-btn" onclick="toggleGameButtons()"><span>게임</span></button>
+            <div id="game-buttons" class="game-buttons" style="display:none;">
+                <button onclick="openModalWindow('https://yunrang2.github.io/jdlotto15/')">로또</button>
+                <button onclick="openModalWindow('https://yunrang2.github.io/ScrachL/')">스피또</button>
+                <button onclick="openModalWindow('https://yunrang2.github.io/popbingo.io/')">빙고</button>
+            </div>
         </div>
         <button id="return-button" class="return-button" onclick="toggleContentVisibility()">돌아가기</button>
         <div id="input-timer-modal" class="input-timer-modal">
@@ -478,6 +518,12 @@
             <input id="custom-minutes" class="input-timer" type="number" placeholder="분" min="0">
             <input id="custom-seconds" class="input-timer" type="number" placeholder="초" min="0" max="59">
             <button onclick="setCustomTimer()"><span>설정</span></button>
+        </div>
+
+        <!-- 빙고 게임 모달 창 -->
+        <div id="modal-window" class="modal-window" style="display:none;">
+            <button class="close-modal">닫기</button>
+            <iframe src="" frameborder="0"></iframe>
         </div>
     </div>
 </body>
